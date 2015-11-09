@@ -1,0 +1,51 @@
+%wk 11 - stochasticity
+
+beta = .03;
+gamma = .01;
+N0 = 50;
+Y0 = .5*N0;
+MaxTime = 10*365;
+d = .1;
+
+X = zeros(1000*MaxTime,1);
+Y = zeros(1000*MaxTime,1);%these are extra huge because matlab insists on initializing but we don't know how long these will be since it's random, so just make a big one and chop it after.
+X(1,1) = N0 - Y0;
+Y(1,1) = Y0;
+time = zeros(1000*MaxTime,1);%same here.
+
+lastelem = 1;
+while time(lastelem) < MaxTime
+    TransRate = beta*X(lastelem)*Y(lastelem)/(X(lastelem)+Y(lastelem));
+    RecovRate = gamma*Y(lastelem);
+    
+    nextTrans = -(1/TransRate)*log(rand(1,1));
+    nextRecov = -(1/RecovRate)*log(rand(1,1));
+    nextImport = -(1/d)*log(rand(1,1));
+    
+    if nextTrans < min([nextRecov, nextImport])
+        X(lastelem+1) = X(lastelem)-1;
+        Y(lastelem+1) = Y(lastelem)+1;
+        time(lastelem+1) = time(lastelem)+nextTrans;
+    elseif nextRecov < min([nextTrans, nextImport])
+        X(lastelem+1) = X(lastelem)+1;
+        Y(lastelem+1) = Y(lastelem)-1;
+        time(lastelem+1) = time(lastelem) + nextRecov;
+    elseif nextImport<min([nextTrans,nextRecov])
+        X(lastelem+1) = X(lastelem)-1;
+        Y(lastelem+1) = Y(lastelem)-1;
+        time(lastelem+1) = time(lastelem)+ nextImport;
+    end
+    lastelem = lastelem+1;
+end
+
+time = time(1:lastelem);
+X = X(1:lastelem);
+Y = Y(1:lastelem);
+
+figure(1)
+plot(time/365,Y./(X+Y),'b-');
+hold on
+xlabel('Time (years)');
+ylabel('Y/N');
+
+        
